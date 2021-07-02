@@ -6,12 +6,18 @@ from core import Record
 class Halo:
 
     def __init__(self):
-        open('haloLog.csv', )
+        # open('haloLog.csv', 'w+')
+        pass
+    
+    def run(self, input_file):
+        print(input_file)
 
 
 if __name__ == '__main__':
-    while 1:
-        try:
-            cmd = input(">> ")
-        except:
-            break
+    parser = argparse.ArgumentParser()
+    parser.add_argument('input', type=str, help='input file path')
+    args = parser.parse_args()
+
+    obj = Halo()
+
+    obj.run(args.input)
