@@ -10,8 +10,9 @@ class Halo:
         pass
     
     def run(self, input_file):
-        print(input_file)
-
+        file = open(f'{input_file}', 'r+')
+        for i in file:
+            print(i)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

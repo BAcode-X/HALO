@@ -1,13 +1,16 @@
 import json
-
+import uuid
 
 
 class Type:
-    
-    def __init__(self) -> None:
-        pass
 
-    def create(self, *args, **kwargs):
+    planet = "E226 - S187"
+    primary_key = None
+    
+    def __init__(self):
+        self.primary_key = uuid.uuid4()
+
+    def create(self, number, *args):
         pass
 
     def delete(self, *args, **kwargs):

@@ -11,6 +11,7 @@ class Record:
         primary_key = uuid.uuid4()
 
     def create(self, *args, **kwargs):
+        
         pass
 
     def delete(self, *args, **kwargs):
