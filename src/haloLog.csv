@@ -1,0 +1,12 @@
+username,occurance,operation,status
+null,16252490391917534,login useralpha e226s234d,success
+null,16252490391917949,register user useralpha X3jf34nasdjn X3jf34nasdjn,success
+null,16252490391918278,login useralpha X3jf34nasdjn,success
+null,16252490391918569,create type animal 4 name age height weight,success
+null,1625249039192031,inherit type human animal alias occupation,success
+null,16252490391920657,create record human 3 MarkWebbler 27 178 81 Shadow Engineer,success
+null,1625249039192131,list record human,success
+null,1625249039192164,list record animal,success
+null,162524903919219,logout,success
+null,16252490391922135,list record human,success
+null,16252490391922452,list type,success
