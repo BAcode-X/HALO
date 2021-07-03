@@ -7,7 +7,12 @@ from exceptions import InvalidCreaditioal
 from db_manager import DBObject, HaloDB
 
 
+
 class Halo:
+    def __init__(self):
+        open(
+            "haloLog.csv",
+        )
 
     user = None
     status = 'failure'
@@ -58,7 +63,6 @@ class Halo:
 
 
 obj = Halo()
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
