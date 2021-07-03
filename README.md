@@ -23,7 +23,7 @@ cd HALO
 | Operation                 | Input Format                   |     OutPut                          |           
 |---------------------------| :-------------------------------| :----------------------------|
 | Register | register user <username_> <password_> <password_>   | None |
-| Login    | login <username_> <password_> | Note |
+| Login    | login <username_> <password_> | None |
 | Logout   | logout | None |
 
 
