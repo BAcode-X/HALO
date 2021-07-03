@@ -16,8 +16,21 @@ Requirements:
 ## Installation
 ```shell
 git clone https://github.com/<username>/HALO
-cd HALO
 ```
+
+## Usage
+### Input/Output
+The input and output file names will be given as arguments to the executable program, which is **haloSoftware.py**.
+
+<em>To run the program use the following command.</em>
+```shell
+python3 Halo/src/haloSoftware.py <input_file> <output_file>
+```
+The **<output_file>** represents the name and path of the output file.
+
+The **<input_file>** represents the name and path of the input file.
+
+**The input file must consist operations with the following format.**
 
 ### HALO Authentication Language Operations
 | Operation                 | Input Format                   |     OutPut                          |           
@@ -44,6 +57,7 @@ cd HALO
 | Search    | search record <type_name> <pk> | <field_1_value> <field_2_value> ... |
 | List   | list record <type_name> | <record1_field1_value> <record1_field2_value> ... <br> <record2_field1_value> <record2_field2_value> ... <br> ... |
 | Filter  | filter record <type_name> <condition_> | <record1_field1_value> <record1_field2_value> ... <br> <record2_field1_value> <record2_field2_value> ... <br> ... |
+
 
  
   
