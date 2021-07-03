@@ -4,15 +4,15 @@ import time
 import uuid
 from hashlib import pbkdf2_hmac
 
-from db_manager import db
-from exceptions import (
+from .db_manager import db
+from .exceptions import (
     DuplicatedPrimaryKey,
     ForbidenAccess,
     InvalidCreaditioal,
     MultipleValueReturned,
     UniqueConstraintError,
 )
-from halo_logger import logger
+from .halo_logger import logger
 
 
 class User:

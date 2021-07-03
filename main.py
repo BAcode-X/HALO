@@ -1,69 +1,90 @@
 import argparse
-from auth import User, UserManager
-from type import Type
-from core import Record
-import time
-import csv
-from exceptions import InvalidCreaditioal
+from collections import namedtuple
 
-class Halo:
-    def __init__(self):
-        open(
-            "haloLog.csv",
-        )
-    user = None
-    status = 'failure'
+from src import auth
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('input_file', metavar='input file', type=open,
+                    help='input file for the Halo Software')
+parser.add_argument('output_file', metavar='output file', type=str,
+                    help='output file for the Halo Software')
 
-    def __init__(self):
-        with open('halodb.csv', 'w') as f:
-            pass
-        with open('haloLog.csv', 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(['username', 'occurance', 'operation', 'status'])
+args = parser.parse_args()
 
-    def record_log(self, list):
-        with open('haloLog.csv', 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(list)
+class Command:
 
-    
-    def run(self, input_file):
-        file = open(f'{input_file}', 'r+', newline='')
-        for i in file:
-            if i:
-                cmd = str(i).strip().split()
-                if len(cmd) != 1:
-                    if cmd[0] == 'create' and cmd[1] == 'type':
-                        type_obj = Type()
-                        type_obj.create(cmd[2], cmd[3], cmd[4:])
-                        self.status = 'success'
-                    elif cmd[0] == 'login':
-                        self.user = UserManager.authenticate(cmd[1], cmd[2])
-                        self.status = 'success' if self.user else 'failure'
-                    elif cmd[0] == 'register':
-                        try:
-                            UserManager.create_user(cmd[2], cmd[3], cmd[4])
-                        except:
-                            self.status = 'failure'
-                    elif cmd[0] == 'delete':
-                        pass
+	def __init__(self, name, *args):
+		self.name = name
+		self.set_options(*args)
 
-                else:
-                    self.user = None
-                    self.status = 'success'
-                log = [self.user.username if self.user else 'null']
-                log.append(''.join(str(time.time()).split('.')))
-                log.append(' '.join(cmd))
-                log.append(self.status)
-                self.record_log(log)
+	def exce(self):
+		pass
+
+	def set_options(self, *args):
+		raise NotImplemented
+
+class AuthCommand(Command):
+
+	def set_options(self, *args):
+		if self.name.upper() == 'REGISTER':
+			self._type, self.username, self.password, self.re_password = args
+		elif self.name.upper() == 'LOGIN':
+			self.username, self.password = args
+
+	def exce(self):
+		if self.name.upper() == 'REGISTER':
+			user = auth.UserManager.create_user(self.username, self.password, self.re_password)
+		elif self.name.upper() == 'LOGIN':
+			user = auth.UserManager.authenticate(self.username, self.password)
+		elif self.name.upper() == 'LOGOUT':
+			user = None
+		return user
+
+class DLOCommand(Command):
+
+	def set_options(self, *args):
+		if self.name.upper() == 'CREATE':
+			self._type, self.type_name, *self.fields = args
+		elif self.name.upper() == 'DELETE':
+			self._type, self.type_name = args
+		elif self.name.upper() == 'INHERIT':
+			self._type, self.type_target, self.type_name, *self.fields = args
+
+	def exce(self):
+		if self.name.upper() == 'REGISTER':
+			user = auth.UserManager.create_user(self.username, self.password, self.re_password)
+		elif self.name.upper() == 'LOGIN':
+			user = auth.UserManager.authenticate(self.username, self.password)
+		elif self.name.upper() == 'LOGOUT':
+			user = None
+		return user
 
 
-obj = Halo()
+class HaloSoftware:
+
+	user = None
+	AUTH_CMD = ['REGISTER', 'LOGIN', 'LOGOUT']
+	def __init__(self):
+		self.input_file = args.input_file
+		self.output_file =  args.output_file
+		self.commands  = self.__parse_commands(self.input_file)
+		self.exce(self.commands)
+
+	def __parse_commands(self, file):
+		lines = [line.split() for line in file.readlines()]
+		data = []
+		for line in lines:
+			cmd_name = line[0]
+			if cmd_name.upper() in self.AUTH_CMD:
+				cmd = AuthCommand(cmd_name, *line[1:])
+
+			data.append(cmd)
+		return data
+
+	def exce(self, commands):
+		for cmd in self.commands:
+			if isinstance(cmd, AuthCommand):
+				user = cmd.exce()
+			cmd.exce()
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('input', type=str, help='input file path')
-    args = parser.parse_args()
-
-    obj.run(args.input)
-
+	hallo = HaloSoftware()

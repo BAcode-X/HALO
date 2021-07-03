@@ -17,7 +17,7 @@ class CsvFormatter(logging.Formatter):
         return data.strip()
 
 
-logging.basicConfig(level=logging.DEBUG, filename="logs/hallolog.csv")
+logging.basicConfig(level=logging.DEBUG, filename="src/logs/hallolog.csv")
 
 logger = logging.getLogger(__name__)
 logging.root.handlers[0].setFormatter(CsvFormatter())

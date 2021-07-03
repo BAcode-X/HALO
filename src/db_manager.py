@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-from exceptions import (
+from .exceptions import (
     DuplicatedPrimaryKey,
     TypeAlreadyExist,
     TypeDoesNotExist,
@@ -196,12 +196,12 @@ class DBObject:
 class HaloDB:
     def get_connection(self, filename):
         try:
-            ufilename = self.__next_free_file(f"db/{filename}.json")
+            ufilename = self.__next_free_file(f"src/db/{filename}.json")
             previous = None
             file_size = Path(ufilename).stat().st_size
             json_data = None
             if file_size > 32 * 10:
-                new_filename = f"db/{filename}_{os.urandom(2).hex()}.json"
+                new_filename = f"src/db/{filename}_{os.urandom(2).hex()}.json"
                 with open(ufilename, "r") as f:
                     json_data = json.load(f)
                 with open(ufilename, 'w') as f:
