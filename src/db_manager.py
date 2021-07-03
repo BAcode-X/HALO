@@ -1,11 +1,5 @@
 import json
-<<<<<<< HEAD
-from pathlib import Path
-from exceptions import TypeDoesNotExist, TableDoesNotExist
-=======
-
 from exceptions import TypeDoesNotExist, TypeAlreadyExist, DuplicatedPrimaryKey, UniqueConstraintError
->>>>>>> 5de67cc3e32b2453b6ae9495b2aee8ee5e9012af
 
 
 class DBObject:
@@ -57,7 +51,7 @@ class DBObject:
     def __get_type(self, type_name):
         _type = self.types.get(type_name, None)
         if _type is None:
-            raise TableDoesNotExist(f'Type name "{type_name}" does not in the pages.')
+            raise TypeDoesNotExist(f'Type name "{type_name}" does not in the pages.')
         return _type
 
     def create_recored(self, type_name, *fields, **kwargs):
@@ -69,15 +63,12 @@ class DBObject:
             primary_key = _type["pk_count"] + 1
             _type["pk_count"] += 1
         _fields = _type['meta_data']['fields']
-<<<<<<< HEAD
-=======
         unique_field = _type["meta_data"].get('unique', None)
         data = dict(zip(_fields, fields))
         if unique_field is not None:
             for field in unique_field:
                 if self.filter_recoreds(type_name, field, data.get(field), '='):
                     raise UniqueConstraintError(f"Duplcated {field}.")
->>>>>>> 5de67cc3e32b2453b6ae9495b2aee8ee5e9012af
         _type['records'].update({
             int(primary_key): {
                 **data
@@ -105,11 +96,6 @@ class DBObject:
         _type = self.__get_type(type_name)
         recordes = _type.get('records')
         valid_data = {}
-<<<<<<< HEAD
-        for recored in records:
-            if eval(f"{records[recored]['fields']}{operator}{value}"):
-                valid_data.update({recored:{**records[records]}})
-=======
         operator = '==' if operator == '=' else operator
         field = int(field) if field.isdigit() else str(field)
         value = int(value) if value.isdigit() else str(value)
@@ -119,7 +105,6 @@ class DBObject:
         if len(valid_data) == 1:
             primary_key = list(valid_data.keys())[0]
             valid_data = {'primary_key': int(primary_key), **valid_data[primary_key]}
->>>>>>> 5de67cc3e32b2453b6ae9495b2aee8ee5e9012af
         return valid_data
 
     def commit(self):
