@@ -188,9 +188,11 @@ class HaloSoftware:
                             for key, values in opt.items():
                                 file.write(f"E226-S187, ")
                                 file.write(f"{key}, ")
-                                for value in values.values():
-                                    file.write(f"{value}, ")
+                                if isinstance(values, dict):
+                                    for value in values.values():
+                                        file.write(f"{value}, ")
                                 file.write("\n")
+
                     logger.info(
                         f"{self.user.username},{int(time.time())},{cmd._command},SUCCESS"
                     )

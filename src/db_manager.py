@@ -66,8 +66,9 @@ class DBObject:
         fields = _type["meta_data"]["fields"]
         fields += attrs
         meta_data = _type["meta_data"].copy()
+        kwargs.update({'fields': fields})
         meta_data.update(**kwargs)
-        self.create_type(type_name, *fields[0], **meta_data)
+        self.create_type(type_name, *fields, **meta_data)
 
     def delete_type(self, type_name, *args, **kwargs):
         filename = self.filename
