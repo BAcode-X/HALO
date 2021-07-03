@@ -1,1 +1,0 @@
-{"type_counter": 1, "prev": null, "next": null, "types": {"users": {"pk_count": 1, "meta_data": {"fields": ["username", "password"], "unique": ["username"]}, "records": {"1": {"username": "useralpha", "password": "d28b31546df49fbf083bf6e6b886262033f92378797e535ed5d2cafe2db6b35d"}}}}}

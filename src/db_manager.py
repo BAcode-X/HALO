@@ -42,6 +42,7 @@ class DBObject:
         self.types = self.all_db_data.get("types", {})
 
     def __compare(self, val1, val2, operator):
+        val1 = int(val1) if val1.isdigit() else str(val1)
         if isinstance(val1, str) and isinstance(val2, str):
             return eval(f'"{val1}" {operator} "{val2}"')
         if isinstance(val1, int) and isinstance(val2, int):
@@ -65,11 +66,15 @@ class DBObject:
         self.db_file['type_counter'] += 1
         self.types.update(data)
         self.all_db_data["type_counter"] += 1
+        self.all_db_data['types'].update(data)
 
-    def inherit_type(self, type_name, inherited, *attrs, **kwargs):
-        _type = self.__get_type(inherited)
-        fields = list(set(_type["meta_data"]["fields"].extend(attrs)))
-        self.create_type(type_name, *fields, **kwargs)
+    def inherit_type(self, type_name, type_target, *attrs, **kwargs):
+        _type = self.__get_type(type_target)
+        fields = _type['meta_data']['fields']
+        fields += attrs
+        meta_data = _type['meta_data'].copy()
+        meta_data.update(**kwargs)
+        self.create_type(type_name, *fields[0], **meta_data)
 
     def delete_type(self, type_name, *args, **kwargs):
         filename = self.filename
@@ -98,7 +103,7 @@ class DBObject:
     def __get_type(self, type_name):
         _type = self.types.get(type_name, None)
         if _type is None:
-            raise TableDoesNotExist(f'Type name "{type_name}" does not in the pages.')
+            raise TypeDoesNotExist(f'Type name "{type_name}" does not in the pages.')
         return _type
 
     def create_recored(self, type_name, *fields, **kwargs):
@@ -120,10 +125,10 @@ class DBObject:
         if self.db_file['types'].get(type_name, None) is None:
             self.db_file['types'][type_name] = {'records': {}}
             self.db_file['types'][type_name]['meta_data'] = _type['meta_data']
-        self.db_file['types'][type_name]['records'].update({primary_key: data})
+        self.db_file['types'][type_name]['records'].update({int(primary_key): data})
         self.db_file['types'][type_name]['pk_count'] = _type['pk_count']
         self.db_file['type_counter'] = len(self.db_file['types'])
-        return {"primary_key": primary_key, **data}
+        return {"primary_key": int(primary_key), **data}
 
     def update_recored(self, type_name, primary_key, *fields):
         filename = self.filename
@@ -134,9 +139,9 @@ class DBObject:
                 if json_data['types'][type_name]['records'].get(primary_key, None) is not None:
                     _fields = json_data['types'][type_name]['meta_data']['fields']
                     data = dict(zip(_fields, fields))
-                    json_data['types'][type_name]['records'][primary_key] = data
-                    self.all_db_data['types'][type_name]['records'][primary_key] = data
-                    is_available = {'primary_key': primary_key, **data}
+                    json_data['types'][type_name]['records'][int(primary_key)] = data
+                    self.all_db_data['types'][type_name]['records'][int(primary_key)] = data
+                    is_available = {'primary_key': int(primary_key), **data}
             if is_available:
                 with open(filename, 'w') as file:
                         json.dump(json_data, file)
@@ -151,8 +156,8 @@ class DBObject:
             with open(filename, 'r') as file:
                 json_data = json.load(file)
                 if json_data['types'][type_name]['records'].get(primary_key, None) is not None:
-                    del json_data['types'][type_name]['records'][primary_key]
-                    del self.all_db_data['types'][type_name]['records'][primary_key]
+                    del json_data['types'][type_name]['records'][int(primary_key)]
+                    del self.all_db_data['types'][type_name]['records'][int(primary_key)]
                     found = True
             if found:
                 with open(filename, 'w') as file:
@@ -163,11 +168,11 @@ class DBObject:
 
         _type = self.__get_type(type_name)
         if _type["records"].get(primary_key, None) is not None:
-            del _type["records"][primary_key]
+            del _type["records"][int(primary_key)]
 
     def search_recored(self, type_name, primary_key):
         _type = self.__get_type(type_name)
-        return _type["records"].get(primary_key, None)
+        return _type["records"].get(int(primary_key), None)
 
     def list_recoreds(self, type_name):
         _type = self.__get_type(type_name)
@@ -178,14 +183,13 @@ class DBObject:
         recordes = _type.get("records")
         valid_data = {}
         operator = "==" if operator == "=" else operator
-        field = int(field) if field.isdigit() else str(field)
         value = int(value) if value.isdigit() else str(value)
         for recored in recordes:
             if self.__compare(recordes[recored][field], value, operator):
                 valid_data.update({recored: {**recordes[recored]}})
         if len(valid_data) == 1:
             primary_key = list(valid_data.keys())[0]
-            valid_data = {"primary_key": int(primary_key), **valid_data[primary_key]}
+            valid_data = {"primary_key": int(primary_key), **valid_data[int(primary_key)]}
         return valid_data
 
     def commit(self):

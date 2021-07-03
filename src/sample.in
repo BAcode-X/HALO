@@ -1,3 +1,15 @@
 login useralpha e226s234d
 register user useralpha X3jf34nasdjn X3jf34nasdjn
 login useralpha X3jf34nasdjn
+create type animal 4 name age height weight
+inherit type human animal alias occupation
+create record human 3 MarkWebbler 27 178 81 Shadow Engineer
+create record human 3 Wende 25 178 81 Shadow Engineer
+list record human
+list record animal
+list type
+search record users 1
+filter record human age < 30
+logout
+list record human
+list type
