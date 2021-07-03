@@ -1,26 +1,16 @@
 import argparse
-<<<<<<< HEAD
-
-from auth import User
-from core import Record
-from type import Type
-=======
 from auth import User, UserManager
 from type import Type
 from core import Record
 import time
 import csv
 from exceptions import InvalidCreaditioal
->>>>>>> 030d075b9e7c0d4d89fbd8d634cffef9b108a98d
 
-
-<<<<<<< HEAD
 class Halo:
     def __init__(self):
         open(
             "haloLog.csv",
         )
-=======
     user = None
     status = 'failure'
 
@@ -61,8 +51,6 @@ class Halo:
                 else:
                     self.user = None
                     self.status = 'success'
->>>>>>> 030d075b9e7c0d4d89fbd8d634cffef9b108a98d
-
                 log = [self.user.username if self.user else 'null']
                 log.append(''.join(str(time.time()).split('.')))
                 log.append(' '.join(cmd))
@@ -72,18 +60,10 @@ class Halo:
 
 obj = Halo()
 
-<<<<<<< HEAD
-if __name__ == "__main__":
-    while 1:
-        try:
-            cmd = input(">> ")
-        except:
-            break
-=======
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('input', type=str, help='input file path')
     args = parser.parse_args()
 
     obj.run(args.input)
->>>>>>> 030d075b9e7c0d4d89fbd8d634cffef9b108a98d
+

@@ -3,8 +3,9 @@ import os
 import uuid
 from hashlib import pbkdf2_hmac
 
-from exceptions import InvalidCreaditioal
+from exceptions import InvalidCreaditioal, ForbidenAccess, MultipleValueReturned
 
+from db_manager import db
 
 class User:
     planet = "E226-S187"
@@ -18,8 +19,10 @@ class User:
         self.username = username
 
     def __setattr__(self, attr, value, *args, **kwargs):
+        if getattr(self, attr, None) is not None and attr == self.PRIMARY_KEY:
+            raise ForbidenAccess('cannot set a primary key.')
         if attr not in self.__fields:
-            raise KeyError(f"Setting an attribute '{attr}'' is forbiden.")
+            raise ForbidenAccess(f"Setting an attribute '{attr}'' is forbiden.")
         return super().__setattr__(attr, value, *args, **kwargs)
 
     def __repr__(self):
@@ -33,28 +36,19 @@ class UserManager:
             raise InvalidCreaditioal("Password mismatched")
         if not username.isalnum():
             raise TypeError("Username must be alphanumeric.")
-        # NO REP USERNAME
-        user = User(5, None)
-        setattr(user, User.USERNAME, username)
         hashed_password = cls.__hash_password(password)
-        cls.__create_user(5, username, hashed_password)
+        user_data = cls.__create_user(username, hashed_password)
+        user = User(None, None)
+        for key, value in user_data.items():
+            setattr(user, key, value)
         return user
 
     @classmethod
-    @property
-    def __next_pk(cls):
-        json_data = cls.__get_all_users()
-        if json_data:
-            last_pk = list(json_data.keys())[-1]
+    def __create_user(cls, username, hashed_password):
+        user = db.create_recored("users", username, hashed_password)
+        db.commit();
+        return user
 
-    @classmethod
-    def __create_user(cls, pk, username, hashed_password):
-        json_data = cls.__get_all_users()
-        with open("users.json", "w") as f:
-            json_data.update(
-                {pk: {User.USERNAME: username, User.PASSWORD: hashed_password}}
-            )
-            json.dump(json_data, f)
 
     @classmethod
     def __get_all_users(cls):
@@ -74,25 +68,10 @@ class UserManager:
         return hashed_password.hex()
 
     @classmethod
-    def __filter_username(cls, username):
-        with open("users.json", "r+") as f:
-            try:
-                users = json.load(f)
-            except json.decoder.JSONDecodeError:
-                json.dump({"pk_count": 0, "data": {}}, f)
-                return None
-            for user_pk in users["data"]:
-                if users["data"][user_pk][User.USERNAME] == username:
-                    return {
-                        "pk": user_pk,
-                        User.USERNAME: username,
-                        User.PASSWORD: users[user_pk].get("password"),
-                    }
-        return None
-
-    @classmethod
     def authenticate(cls, username, password):
-        user_data = cls.__filter_username(username)
+        user_data = db.filter_recoreds('users', 'username', '=', username)
+        if len(user_data) > 1:
+            raise MultipleValueReturned
         if user_data is None:
             return None
         if user_data.get("password") == cls.__hash_password(password):
