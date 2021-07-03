@@ -1,6 +1,7 @@
-import logging
 import csv
 import io
+import logging
+
 
 class CsvFormatter(logging.Formatter):
     def __init__(self):
@@ -15,7 +16,8 @@ class CsvFormatter(logging.Formatter):
         self.output.seek(0)
         return data.strip()
 
-logging.basicConfig(level=logging.DEBUG, filename="hallolog.csv")
+
+logging.basicConfig(level=logging.DEBUG, filename="src/logs/hallolog.csv")
 
 logger = logging.getLogger(__name__)
 logging.root.handlers[0].setFormatter(CsvFormatter())

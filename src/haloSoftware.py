@@ -1,73 +1,200 @@
 import argparse
-from auth import User, UserManager
-from type import Type
 import time
-import csv
-from exceptions import InvalidCreaditioal
-from db_manager import DBObject, HaloDB
+from collections import namedtuple
+
+import auth
+from db_manager import db
+from halo_logger import logger
+
+parser = argparse.ArgumentParser(description="Process input and output files.")
+parser.add_argument(
+    "input_file",
+    metavar="input file",
+    type=open,
+    help="input file for the Halo Software",
+)
+parser.add_argument(
+    "output_file",
+    metavar="output file",
+    type=str,
+    help="output file for the Halo Software",
+)
+
+args = parser.parse_args()
 
 
+class Command:
+    def __init__(self, name, *args):
+        self.name = name
+        self.set_options(*args)
+        self._command = f"{name} {' '.join(args)}"
 
-class Halo:
-    def __init__(self):
-        open(
-            "haloLog.csv",
-        )
+    def exce(self):
+        raise NotImplemented
 
+    def set_options(self, *args):
+        raise NotImplemented
+
+
+class AuthCommand(Command):
+    def set_options(self, *args):
+        if self.name.upper() == "REGISTER":
+            self._type, self.username, self.password, self.re_password = args
+        elif self.name.upper() == "LOGIN":
+            self.username, self.password = args
+
+    def exce(self, user=None):
+        if self.name.upper() == "REGISTER":
+            auth.UserManager.create_user(self.username, self.password, self.re_password)
+        elif self.name.upper() == "LOGIN":
+            user = auth.UserManager.authenticate(self.username, self.password)
+        elif self.name.upper() == "LOGOUT":
+            logger.info(f"{user.username},{int(time.time())},{self._command},SUCCESS")
+            user = None
+        return user
+
+    @property
+    def has_output(self, cmd):
+        return False
+
+
+class DLOCommand(Command):
+    def set_options(self, *args):
+        if self.name.upper() == "CREATE":
+            self._type, self.type_name, self.count, *self.fields = args
+        elif self.name.upper() == "DELETE":
+            self._type, self.type_name = args
+        elif self.name.upper() == "INHERIT":
+            self._type, self.type_name, self.type_target, *self.fields = args
+        elif self.name.upper() == "LIST":
+            self._type = args
+
+    def exce(self):
+        data = None
+        if self.name.upper() == "CREATE":
+            db.create_type(self.type_name, *self.fields)
+        elif self.name.upper() == "DELETE":
+            db.delete_type(self.type_name)
+        elif self.name.upper() == "INHERIT":
+            db.inherit_type(self.type_name, self.type_target, *self.fields)
+        elif self.name.upper() == "LIST":
+            data = db.list_type()
+        db.commit()
+        return data
+
+    @property
+    def has_output(self):
+        return self.name.upper() == "LIST"
+
+
+class MLOCommand(Command):
+    def set_options(self, *args):
+        if self.name.upper() == "CREATE":
+            self.recored, self.type_name, self.count, *self.values = args
+        elif self.name.upper() == "DELETE":
+            self.recored, self.type_name, self.primary_key = args
+        elif self.name.upper() == "UPDATE":
+            self.recored, self.type_name, self.primary_key, *self.values = args
+        elif self.name.upper() == "SEARCH":
+            self.recored, self.type_name, self.primary_key = args
+        elif self.name.upper() == "LIST":
+            self.recored, self.type_name = args
+        elif self.name.upper() == "FILTER":
+            self.recored, self.type_name, self.filed, self.operator, self.value = args
+
+    def exce(self):
+        data = None
+        if self.name.upper() == "CREATE":
+            db.create_recored(self.type_name, *self.values)
+        elif self.name.upper() == "DELETE":
+            db.delete_recored(self.type_name, self.primary_key)
+        elif self.name.upper() == "UPDATE":
+            db.update_recored(self.type_name, self.primary_key, *self.values)
+        elif self.name.upper() == "SEARCH":
+            data = db.search_recored(self.type_name, self.primary_key)
+        elif self.name.upper() == "LIST":
+            data = db.list_recoreds(self.type_name)
+        elif self.name.upper() == "FILTER":
+            data = db.filter_recoreds(
+                self.type_name, self.filed, self.value, self.operator
+            )
+        db.commit()
+        return data
+
+    @property
+    def has_output(self):
+        return self.name.upper() in ["SEARCH", "LIST", "FILTER"]
+
+
+class HaloSoftware:
     user = None
-    status = 'failure'
+    AUTH_CMD = ["REGISTER", "LOGIN", "LOGOUT"]
+    DLO_CMD = ["CREATE TYPE", "DELETE TYPE", "INHERIT TYPE", "LIST TYPE"]
+    MLO_CMD = [
+        "CREATE RECORD",
+        "DELETE RECORD",
+        "UPDATE RECORD",
+        "SEARCH RECORD",
+        "LIST RECORD",
+        "FILTER RECORD",
+    ]
 
     def __init__(self):
-        with open('halodb.csv', 'w') as f:
-            pass
-        with open('haloLog.csv', 'w', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(['username', 'occurance', 'operation', 'status'])
+        self.input_file = args.input_file
+        self.output_file = args.output_file
+        self.commands = self.__parse_commands(self.input_file)
+        self.exce(self.commands)
 
-    def record_log(self, list):
-        with open('haloLog.csv', 'a', newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow(list)
+    def __parse_commands(self, file):
+        lines = [line.split() for line in file.readlines()]
+        data = []
+        for line in lines:
+            cmd_name = line[0]
+            if cmd_name.upper() in self.AUTH_CMD:
+                cmd = AuthCommand(cmd_name, *line[1:])
+            elif f"{cmd_name} {line[1]}".upper() in self.DLO_CMD:
+                cmd = DLOCommand(cmd_name, *line[1:])
+            elif f"{cmd_name} {line[1]}".upper() in self.MLO_CMD:
+                cmd = MLOCommand(cmd_name, *line[1:])
+            data.append(cmd)
+        return data
 
-    
-    def run(self, input_file):
-        file = open(f'{input_file}', 'r+', newline='')
-        for i in file:
-            if i:
-                cmd = str(i).strip().split()
-                if len(cmd) != 1:
-                    if cmd[0] == 'create' and cmd[1] == 'type':
-                        type_obj = Type()
-                        type_obj.create(cmd[2], cmd[3], cmd[4:])
-                        self.status = 'success'
-                    elif cmd[0] == 'login':
-                        self.user = UserManager.authenticate(cmd[1], cmd[2])
-                        self.status = 'success' if self.user else 'failure'
-                    elif cmd[0] == 'register':
-                        try:
-                            UserManager.create_user(cmd[2], cmd[3], cmd[4])
-                        except:
-                            self.status = 'failure'
-                    elif cmd[0] == 'delete':
-                        pass
+    def exce(self, commands):
+        with open(f"{self.output_file}", "w") as file:
+            for cmd in self.commands:
+                if isinstance(cmd, AuthCommand):
+                    self.user = cmd.exce(self.user)
+                elif (
+                    isinstance(cmd, DLOCommand) or isinstance(cmd, MLOCommand)
+                ) and self.user is None:
+                    logger.error(f"NULL,{int(time.time())},{cmd._command},FAILURE")
+                elif isinstance(cmd, DLOCommand) or isinstance(cmd, MLOCommand):
+                    opt = cmd.exce()
+                    if cmd.has_output:
+                        if isinstance(cmd, DLOCommand) and cmd.name.upper() == "LIST":
+                            file.write(f"E226-S187\n")
+                            for key in opt.keys():
+                                file.write(f"{key}\n")
+                        elif (
+                            isinstance(cmd, MLOCommand) and cmd.name.upper() == "SEARCH"
+                        ):
+                            file.write(f"E226-S187, ")
+                            for value in opt.values():
+                                file.write(f"{value}, ")
+                            file.write("\n")
+                        elif isinstance(cmd, MLOCommand) and (
+                            cmd.name.upper() == "LIST" or cmd.name.upper() == "FILTER"
+                        ):
+                            for key, values in opt.items():
+                                file.write(f"E226-S187, ")
+                                file.write(f"{key}, ")
+                                for value in values.values():
+                                    file.write(f"{value}, ")
+                                file.write("\n")
+                    logger.info(
+                        f"{self.user.username},{int(time.time())},{cmd._command},SUCCESS"
+                    )
 
-                else:
-                    self.user = None
-                    self.status = 'success'
 
-                log = [self.user.username if self.user else 'null']
-                log.append(''.join(str(time.time()).split('.')))
-                log.append(' '.join(cmd))
-                log.append(self.status)
-                self.record_log(log)
-
-
-obj = Halo()
-
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('input', type=str, help='input file path')
-    args = parser.parse_args()
-
-    obj.run(args.input)
-
+if __name__ == "__main__":
+    hallo = HaloSoftware()
