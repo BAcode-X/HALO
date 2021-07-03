@@ -2,6 +2,7 @@ import json
 
 from exceptions import TypeDoesNotExist, TypeAlreadyExist, DuplicatedPrimaryKey, UniqueConstraintError
 
+
 class DBObject:
     types = None
     db_file = None
@@ -13,7 +14,7 @@ class DBObject:
 
     def __compare(self, val1, val2, operator):
         if isinstance(val1, str) and isinstance(val2, str):
-            return eval(f'"{val1} {operator} {val2}"')
+            return eval(f'"{val1}" {operator} "{val2}"')
         if isinstance(val1, int) and isinstance(val2, int):
             return eval(f'{val1} {operator} {val2}')
         raise TypeError("cannot compare different data types.")
@@ -70,7 +71,7 @@ class DBObject:
                 if self.filter_recoreds(type_name, field, data.get(field), '='):
                     raise UniqueConstraintError(f"Duplcated {field}.")
         _type['records'].update({
-            primary_key: {
+            int(primary_key): {
                 **data
             }
         })
@@ -81,7 +82,8 @@ class DBObject:
 
     def delete_recored(self, type_name, primary_key):
         _type = self.__get_type(type_name)
-        del _type['records'][primary_key]
+        if _type['records'].get(primary_key, None) is not None:
+            del _type['records'][primary_key]
 
     def search_recored(self, type_name, primary_key):
         _type = self.__get_type(type_name)
@@ -91,20 +93,19 @@ class DBObject:
         _type = self.__get_type(type_name)
         return _type.get('records')
 
-    def filter_recoreds(self, type_name, field, operator, value):
+    def filter_recoreds(self, type_name, field, value, operator):
         _type = self.__get_type(type_name)
         recordes = _type.get('records')
         valid_data = {}
         operator = '==' if operator == '=' else operator
+        field = int(field) if field.isdigit() else str(field)
+        value = int(value) if value.isdigit() else str(value)
         for recored in recordes:
-            field = int(field) if field.isdigit() else str(field)
-            value = int(value) if value.isdigit() else str(value)
-            
-            if self.__compare(field, value, operator):
+            if self.__compare(recordes[recored][field], value, operator):
                 valid_data.update({recored:{**recordes[recored]}})
         if len(valid_data) == 1:
             primary_key = list(valid_data.keys())[0]
-            valid_data = {'pk': primary_key, **valid_data}
+            valid_data = {'primary_key': int(primary_key), **valid_data[primary_key]}
         return valid_data
 
     def commit(self):

@@ -1,9 +1,10 @@
 import json
 import os
 import uuid
+import time
 from hashlib import pbkdf2_hmac
-
-from exceptions import InvalidCreaditioal, ForbidenAccess, MultipleValueReturned
+from halo_logger import logger
+from exceptions import InvalidCreaditioal, ForbidenAccess, MultipleValueReturned, UniqueConstraintError, DuplicatedPrimaryKey
 
 from db_manager import db
 
@@ -33,21 +34,30 @@ class UserManager:
     @classmethod
     def create_user(cls, username, password, new_password):
         if password != new_password:
+            logger.error(f"NULL, {int(time.time())}, REGISTER USER {username}, FAILURE")
             raise InvalidCreaditioal("Password mismatched")
         if not username.isalnum():
+            logger.error(f"NULL, {int(time.time())}, REGISTER USER {username}, FAILURE")
             raise TypeError("Username must be alphanumeric.")
         hashed_password = cls.__hash_password(password)
         user_data = cls.__create_user(username, hashed_password)
+        if user_data is None:
+            return None
         user = User(None, None)
         for key, value in user_data.items():
             setattr(user, key, value)
+        logger.info(f"NULL, {int(time.time())}, REGISTER, USER, {username}, SUCCESS")
         return user
 
     @classmethod
     def __create_user(cls, username, hashed_password):
-        user = db.create_recored("users", username, hashed_password)
-        db.commit();
-        return user
+        try:
+            user = db.create_recored("users", username, hashed_password)
+            db.commit();
+            return user
+        except (UniqueConstraintError, DuplicatedPrimaryKey):
+            logger.error(f"NULL, {int(time.time())}, REGISTER, USER, {username}, FAILURE")
+        return None
 
 
     @classmethod
@@ -69,14 +79,15 @@ class UserManager:
 
     @classmethod
     def authenticate(cls, username, password):
-        user_data = db.filter_recoreds('users', 'username', '=', username)
-        if len(user_data) > 1:
-            raise MultipleValueReturned
+        user_data = db.filter_recoreds('users', 'username', username, '=')
         if user_data is None:
+            logger.error(f"{username}, {int(time.time())}, LOGIN, FAILURE")
             return None
         if user_data.get("password") == cls.__hash_password(password):
-            primary_key = user_data.get("pk")
+            primary_key = user_data.get("primary_key")
             username = user_data.get("username")
             user = User(primary_key, username)
+            logger.info(f"{username}, {int(time.time())}, LOGIN, SUCCESS")
             return user
+        logger.error(f"{username}, {int(time.time())}, LOGIN, FAILURE")
         return None
