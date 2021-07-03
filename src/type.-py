@@ -1,13 +1,16 @@
 import json
+
 <<<<<<< HEAD
 
 
 class Type:
     def __init__(self) -> None:
 =======
-import uuid
 import csv
 import os
+import uuid
+
+
 class Type:
     
     def __init__(self):

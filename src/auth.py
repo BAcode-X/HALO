@@ -1,12 +1,19 @@
 import json
 import os
-import uuid
 import time
+import uuid
 from hashlib import pbkdf2_hmac
-from halo_logger import logger
-from exceptions import InvalidCreaditioal, ForbidenAccess, MultipleValueReturned, UniqueConstraintError, DuplicatedPrimaryKey
 
 from db_manager import db
+from exceptions import (
+    DuplicatedPrimaryKey,
+    ForbidenAccess,
+    InvalidCreaditioal,
+    MultipleValueReturned,
+    UniqueConstraintError,
+)
+from halo_logger import logger
+
 
 class User:
     planet = "E226-S187"
@@ -21,7 +28,7 @@ class User:
 
     def __setattr__(self, attr, value, *args, **kwargs):
         if getattr(self, attr, None) is not None and attr == self.PRIMARY_KEY:
-            raise ForbidenAccess('cannot set a primary key.')
+            raise ForbidenAccess("cannot set a primary key.")
         if attr not in self.__fields:
             raise ForbidenAccess(f"Setting an attribute '{attr}'' is forbiden.")
         return super().__setattr__(attr, value, *args, **kwargs)
@@ -53,12 +60,13 @@ class UserManager:
     def __create_user(cls, username, hashed_password):
         try:
             user = db.create_recored("users", username, hashed_password)
-            db.commit();
+            db.commit()
             return user
         except (UniqueConstraintError, DuplicatedPrimaryKey):
-            logger.error(f"NULL, {int(time.time())}, REGISTER, USER, {username}, FAILURE")
+            logger.error(
+                f"NULL, {int(time.time())}, REGISTER, USER, {username}, FAILURE"
+            )
         return None
-
 
     @classmethod
     def __get_all_users(cls):
@@ -79,7 +87,7 @@ class UserManager:
 
     @classmethod
     def authenticate(cls, username, password):
-        user_data = db.filter_recoreds('users', 'username', username, '=')
+        user_data = db.filter_recoreds("users", "username", username, "=")
         if user_data is None:
             logger.error(f"{username}, {int(time.time())}, LOGIN, FAILURE")
             return None

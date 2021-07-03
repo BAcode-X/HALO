@@ -12,7 +12,7 @@ class Record:
         primary_key = uuid.uuid4()
 
     def create(self, *args):
-        
+
         pass
 
     def delete(self, *args, **kwargs):
