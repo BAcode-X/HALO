@@ -1,6 +1,6 @@
 import json
-
-from exceptions import TypeDoesNotExist
+from pathlib import Path
+from exceptions import TypeDoesNotExist, TableDoesNotExist
 
 
 class DBObject:
@@ -23,7 +23,7 @@ class DBObject:
                 }
             }
         )
-        self.db_file[type_counter] += 1
+        self.db_file["type_counter"] += 1
 
     def inherit_type(self, type_name, inherited, *attrs, **kwargs):
         _type = self.__get_type(inherited)
@@ -47,7 +47,7 @@ class DBObject:
         if primary_key is None:
             primary_key = _type["pk_count"] + 1
             _type["pk_count"] += 1
-        _fields = _type.['meta_data']['fields']
+        _fields = _type['meta_data']['fields']
         _type['records'].update({
             primary_key: {
                 **dict(zip(_fields, fields))
@@ -74,7 +74,7 @@ class DBObject:
         records = _type.get('records')
         valid_data = {}
         for recored in records:
-            if eval(f"{recoreds[recored]['fields']}{operator}{value}"):
+            if eval(f"{records[recored]['fields']}{operator}{value}"):
                 valid_data.update({recored:{**records[records]}})
         return valid_data
 

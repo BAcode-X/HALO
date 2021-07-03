@@ -1,17 +1,10 @@
 import json
-<<<<<<< HEAD
-
-
-class Type:
-    def __init__(self) -> None:
-=======
 import uuid
 import csv
 import os
 class Type:
     
     def __init__(self):
->>>>>>> 030d075b9e7c0d4d89fbd8d634cffef9b108a98d
         pass
 
     def create(self, name, number, attrs):
