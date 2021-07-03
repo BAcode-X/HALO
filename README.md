@@ -24,7 +24,7 @@ The input and output file names will be given as arguments to the executable pro
 
 <em>To run the program use the following command.</em>
 ```shell
-python3 Halo/src/haloSoftware.py <input_file> <output_file>
+python3 HALO/src/haloSoftware.py <input_file> <output_file>
 ```
 The **<output_file>** represents the name and path of the output file.
 
