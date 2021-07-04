@@ -19,6 +19,12 @@ parser.add_argument(
     type=str,
     help="output file for the Halo Software",
 )
+parser.add_argument(
+    "bonus",
+    metavar="handle case",
+    type=int,
+    help="handle case for the Halo Software",
+)
 
 args = parser.parse_args()
 
@@ -90,7 +96,7 @@ class DLOCommand(Command):
 class MLOCommand(Command):
     def set_options(self, *args):
         if self.name.upper() == "CREATE":
-            self.recored, self.type_name, self.count, *self.values = args
+            self.recored, self.type_name, self.primary_key, *self.values = args
         elif self.name.upper() == "DELETE":
             self.recored, self.type_name, self.primary_key = args
         elif self.name.upper() == "UPDATE":
@@ -105,7 +111,7 @@ class MLOCommand(Command):
     def exce(self):
         data = None
         if self.name.upper() == "CREATE":
-            db.create_recored(self.type_name, *self.values)
+            db.create_recored(self.type_name, *self.values, primary_key=self.primary_key)
         elif self.name.upper() == "DELETE":
             db.delete_recored(self.type_name, self.primary_key)
         elif self.name.upper() == "UPDATE":
@@ -139,9 +145,14 @@ class HaloSoftware:
         "FILTER RECORD",
     ]
 
+    def _get_dumy_user(self, username):
+        return auth.User(None, username
+            )
     def __init__(self):
         self.input_file = args.input_file
         self.output_file = args.output_file
+        self.is_bonus = bool(args.bonus)
+        self.user = self._get_dumy_user('Admin') if self.is_bonus else None
         self.commands = self.__parse_commands(self.input_file)
         self.exce(self.commands)
 
@@ -172,26 +183,31 @@ class HaloSoftware:
                     opt = cmd.exce()
                     if cmd.has_output:
                         if isinstance(cmd, DLOCommand) and cmd.name.upper() == "LIST":
-                            file.write(f"E226-S187\n")
+                            if opt:
+                                file.write(f"E226-S187, ")
                             for key in opt.keys():
                                 file.write(f"{key}\n")
                         elif (
                             isinstance(cmd, MLOCommand) and cmd.name.upper() == "SEARCH"
                         ):
-                            file.write(f"E226-S187, ")
+                            if opt:
+                                file.write(f"E226-S187, ")
                             for value in opt.values():
                                 file.write(f"{value}, ")
                             file.write("\n")
                         elif isinstance(cmd, MLOCommand) and (
                             cmd.name.upper() == "LIST" or cmd.name.upper() == "FILTER"
                         ):
-                            for key, values in opt.items():
+                            if opt:
                                 file.write(f"E226-S187, ")
-                                file.write(f"{key}, ")
+                            for key, values in opt.items():
                                 if isinstance(values, dict):
+                                    file.write(f'{key}, ')
                                     for value in values.values():
                                         file.write(f"{value}, ")
-                                file.write("\n")
+                                else:
+                                    file.write(f"{values}, ")
+                            file.write("\n")
 
                     logger.info(
                         f"{self.user.username},{int(time.time())},{cmd._command},SUCCESS"
